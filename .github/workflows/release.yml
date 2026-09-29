@@ -1,0 +1,67 @@
+name: release
+
+# FIRST PUBLISH ONLY. A brand-new package can't be staged -- staging needs
+# the package to exist on the registry already, and the trusted-publisher
+# setup on npmjs.com needs the package to exist first too. So v0.1.0 is
+# published directly, with a short-lived token, from this workflow. After
+# it lands: add the trusted publisher, revoke the token, delete the repo
+# secret, and require 2FA. Every release after this one uses the staged
+# variant instead.
+#
+# Provenance still applies: it comes from any GitHub Actions run with
+# id-token: write, not only from a trusted-publisher run.
+#
+# ACTIONS ARE PINNED TO COMMIT SHAS, not tags. A tag can move to a different
+# commit; a workflow that runs with publish credentials should not trust a
+# third party to keep pointing it at the same code. The version after # is
+# for a human reading this file, not for git.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      # THE TARBALL HOLDS ONLY THE PROJECTED FILES. package.json's own
+      # "files" list is the one true answer; this fails the job the moment
+      # a stray file (or a missing one) would ship.
+      - name: Verify the tarball's file list
+        run: |
+          node -e '
+            const { execSync } = require("node:child_process");
+            const pkg = require("./package.json");
+            const expected = new Set([...pkg.files, "package.json", "README.md", "LICENSE"]);
+            const packed = new Set(
+              JSON.parse(execSync("npm pack --dry-run --json").toString())[0].files.map((f) => f.path)
+            );
+            const missing = [...expected].filter((f) => !packed.has(f));
+            const extra = [...packed].filter((f) => !expected.has(f));
+            if (missing.length || extra.length) {
+              console.error("Tarball file list does not match the projection.");
+              if (missing.length) console.error("  missing:", missing.join(", "));
+              if (extra.length) console.error("  extra:  ", extra.join(", "));
+              process.exit(1);
+            }
+            console.log("OK: tarball holds exactly the projected files.");
+          '
+
+      - name: Publish
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_FIRST_PUBLISH }}
