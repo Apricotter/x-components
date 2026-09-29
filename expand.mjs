@@ -7,11 +7,11 @@ const LEAF_COMPONENTS_DEF = {
     return a.href
       ? `<a class="${cls}" href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}${passThrough(
           a
-        )}>${esc(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`
+        )}>${escText(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`
       : `<button type="${esc(a.type || "button")}" class="${cls}"${boolAttr(
           a,
           "disabled"
-        )}${passThrough(a)}>${esc(a.label ?? "")}</button>`;
+        )}${passThrough(a)}>${escText(a.label ?? "")}</button>`;
   },
 
   "x-hex": (a, ctx) => {
@@ -108,12 +108,12 @@ const LEAF_COMPONENTS_DEF = {
     const count =
       a.count === undefined || a.count === null || a.count === ""
         ? ""
-        : `<span class="nav__item-count">${esc(a.count)}</span>`;
+        : `<span class="nav__item-count">${escText(a.count)}</span>`;
     return (
       `<a class="nav__item" href="${escUrl(a.href ?? "")}"${externalAttrs(a.href, ctx?.siteDomain)}${
         current ? ' aria-current="page"' : ""
       }${passThrough(a)}>` +
-      `<span class="nav__item-label">${esc(a.label ?? "")}</span>${count}</a>`
+      `<span class="nav__item-label">${escText(a.label ?? "")}</span>${count}</a>`
     );
   },
 
@@ -121,24 +121,24 @@ const LEAF_COMPONENTS_DEF = {
     const name = esc(a.name ?? "");
     const hintId = a.hint ? `${name}-hint` : "";
     const describedBy = hintId ? ` aria-describedby="${hintId}"` : "";
-    const hint = a.hint ? `<span class="field__hint" id="${hintId}">${esc(a.hint)}</span>` : "";
+    const hint = a.hint ? `<span class="field__hint" id="${hintId}">${escText(a.hint)}</span>` : "";
     const control =
       "multiline" in a && a.multiline !== "false"
         ? `<textarea class="field__input field__input--multiline" name="${name}" rows="${esc(
             a.rows || "3"
-          )}"${boolAttr(a, "required")}${describedBy}${passThrough(a)}>${esc(a.value ?? "")}</textarea>`
+          )}"${boolAttr(a, "required")}${describedBy}${passThrough(a)}>${escText(a.value ?? "")}</textarea>`
         : `<input class="field__input" type="${esc(a.type || "text")}" name="${name}"${boolAttr(
             a,
             "required"
           )}${a.value ? ` value="${esc(a.value)}"` : ""}${describedBy}${passThrough(a)}>`;
-    return `<label class="field"><span class="field__label">${esc(
+    return `<label class="field"><span class="field__label">${escText(
       a.label ?? ""
     )}</span>${hint}${control}</label>`;
   },
 
   "x-serp-mock": (a) => {
-    const query = esc(a.query ?? "");
-    const noun = esc(a.noun || "shop");
+    const query = escText(a.query ?? "");
+    const noun = escText(a.noun || "shop");
     const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
     const row = (name, rating, modifier = "") =>
       `<li class="serp-mock__row${modifier}">` +
@@ -175,29 +175,29 @@ const LEAF_COMPONENTS_DEF = {
     );
   },
 
-  "x-price": (a) => `<span class="price-tag"${passThrough(a)}>${esc(a.amount ?? "")}</span>`,
+  "x-price": (a) => `<span class="price-tag"${passThrough(a)}>${escText(a.amount ?? "")}</span>`,
 
   "x-consent": (a) =>
     `<label class="consent"><input class="consent__input" type="checkbox" name="${esc(
       a.name ?? ""
-    )}"${boolAttr(a, "checked")}${boolAttr(a, "disabled")}${passThrough(a)}><span>${esc(
+    )}"${boolAttr(a, "checked")}${boolAttr(a, "disabled")}${passThrough(a)}><span>${escText(
       a.label ?? ""
     )}</span></label>`,
 
-  "x-chip": (a) => `<span class="chip"${passThrough(a)}>${esc(a.label ?? "")}</span>`,
+  "x-chip": (a) => `<span class="chip"${passThrough(a)}>${escText(a.label ?? "")}</span>`,
 
-  "x-tag": (a) => `<span class="tag"${passThrough(a)}>${esc(a.label || "Partner")}</span>`,
+  "x-tag": (a) => `<span class="tag"${passThrough(a)}>${escText(a.label || "Partner")}</span>`,
 
   "x-kicker": (a) =>
     `<div class="product-kicker"${passThrough(a)}>` +
     `<svg class="product-kicker__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12S4 4 12 4s11 8 11 8-3 8-11 8-11-8-11-8Z"></path><circle cx="12" cy="12" r="3"></circle></svg>` +
-    `<span>${esc(a.label ?? "")}</span>` +
+    `<span>${escText(a.label ?? "")}</span>` +
     `</div>`,
 
   "x-page-heading": (a) =>
     `<header class="page-heading"${passThrough(a)}>` +
-    `<h1 class="page-heading__title">${esc(a.title ?? "")}</h1>` +
-    (a.blurb ? `<p class="page-heading__blurb">${esc(a.blurb)}</p>` : "") +
+    `<h1 class="page-heading__title">${escText(a.title ?? "")}</h1>` +
+    (a.blurb ? `<p class="page-heading__blurb">${escText(a.blurb)}</p>` : "") +
     `</header>`,
 
   "x-contact-actions": (a) => contactActionsHtml(a, { withPassThrough: true }),
@@ -206,20 +206,20 @@ const LEAF_COMPONENTS_DEF = {
     const compact = "compact" in a && a.compact !== "false";
     const portrait = a.photo
       ?
-        `<img class="person__img" src="${esc(a.photo)}" alt="${esc(a["photo-alt"] ?? a.name ?? "")}" width="72" height="72">`
-      : `<span class="person__initials" aria-hidden="true">${esc(personInitials(a.name))}</span>`;
+        `<img class="person__img" src="${escUrl(a.photo)}" alt="${escText(a["photo-alt"] ?? a.name ?? "")}" width="72" height="72">`
+      : `<span class="person__initials" aria-hidden="true">${escText(personInitials(a.name))}</span>`;
     return (
       `<div class="${classes("person", compact && "person--compact")}"${passThrough(a)}>` +
       `<div class="person__row">` +
       `<span class="person__photo">${portrait}</span>` +
       `<span class="person__identity">` +
-      (a.role ? `<span class="person__role">${esc(a.role)}</span>` : "") +
-      (a.name ? `<span class="person__name">${esc(a.name)}</span>` : "") +
-      (compact && a.phone ? `<span class="person__phone">${esc(a.phone)}</span>` : "") +
+      (a.role ? `<span class="person__role">${escText(a.role)}</span>` : "") +
+      (a.name ? `<span class="person__name">${escText(a.name)}</span>` : "") +
+      (compact && a.phone ? `<span class="person__phone">${escText(a.phone)}</span>` : "") +
       `</span>` +
       `</div>` +
       (compact ? contactActionsHtml(a) : "") +
-      (!compact && a.bio ? `<p class="person__bio">${esc(a.bio)}</p>` : "") +
+      (!compact && a.bio ? `<p class="person__bio">${escText(a.bio)}</p>` : "") +
       `</div>`
     );
   },
@@ -228,16 +228,16 @@ const LEAF_COMPONENTS_DEF = {
     const tag = a.href ? "a" : "div";
     return (
       `<${tag} class="card-link"${
-        a.href ? ` href="${esc(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}` : ""
+        a.href ? ` href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}` : ""
       }${passThrough(a)}>` +
       (a.image
-        ? `<img class="${classes("card-link__image", a["image-class"])}" src="${esc(a.image)}" alt="${esc(a["image-alt"] ?? "")}">`
+        ? `<img class="${classes("card-link__image", a["image-class"])}" src="${escUrl(a.image)}" alt="${escText(a["image-alt"] ?? "")}">`
         : a["image-placeholder"]
-          ? `<div class="media-placeholder media-placeholder--3-2">${esc(a["image-placeholder"])}</div>`
+          ? `<div class="media-placeholder media-placeholder--3-2">${escText(a["image-placeholder"])}</div>`
           : "") +
-      `<span class="card-link__name">${esc(a.name ?? "")}</span>` +
-      (a.blurb ? `<span class="card-link__blurb">${esc(a.blurb)}</span>` : "") +
-      (a.accent ? `<span class="text-accent">${esc(a.accent)}</span>` : "") +
+      `<span class="card-link__name">${escText(a.name ?? "")}</span>` +
+      (a.blurb ? `<span class="card-link__blurb">${escText(a.blurb)}</span>` : "") +
+      (a.accent ? `<span class="text-accent">${escText(a.accent)}</span>` : "") +
       `</${tag}>`
     );
   },
@@ -245,15 +245,15 @@ const LEAF_COMPONENTS_DEF = {
   "x-header": (a) =>
     `<header class="site-header"${passThrough(a)}>` +
     `<div class="site-header__brand">` +
-    `<span class="site-header__wordmark">${esc(a.brand ?? "")}</span>` +
+    `<span class="site-header__wordmark">${escText(a.brand ?? "")}</span>` +
     `</div>` +
     (a.phone || a["contact-href"]
       ? `<div class="site-header__contact">` +
         (a.phone
-          ? `<a class="nav__item site-header__phone" href="tel:${esc(a["phone-href"] || telDigits(a.phone))}">${esc(a.phone)}</a>`
+          ? `<a class="nav__item site-header__phone" href="tel:${escUrl(a["phone-href"] || telDigits(a.phone))}">${escText(a.phone)}</a>`
           : "") +
         (a["contact-href"]
-          ? `<a class="nav__item" href="${esc(a["contact-href"])}">Contact</a>`
+          ? `<a class="nav__item" href="${escUrl(a["contact-href"])}">Contact</a>`
           : "") +
         `</div>`
       : "") +
@@ -265,8 +265,8 @@ const LEAF_COMPONENTS_DEF = {
   "x-hero": (a) => {
     const tag = headingTag(a["heading-tag"]);
     const style = [
-      a["door-image"] ? `--hero-door-img: url('${escUrl(a["door-image"])}')` : "",
-      a.image ? `--hero-img: url('${escUrl(a.image)}')` : "",
+      a["door-image"] ? `--hero-door-img: url('${escCssUrl(a["door-image"])}')` : "",
+      a.image ? `--hero-img: url('${escCssUrl(a.image)}')` : "",
     ]
       .filter(Boolean)
       .join("; ");
@@ -276,8 +276,8 @@ const LEAF_COMPONENTS_DEF = {
       `<div class="hero__door"></div>` +
       `<div class="hero__scene"></div>` +
       `<div class="hero__content">` +
-      `<${tag} id="${esc(a["heading-id"] || "hero-h2")}" class="hero__heading">${esc(a.heading ?? "")}</${tag}>` +
-      `<p id="${esc(a["pitch-id"] || "hero-pitch")}" class="hero__pitch">${esc(a.pitch ?? "")}</p>` +
+      `<${tag} id="${esc(a["heading-id"] || "hero-h2")}" class="hero__heading">${escText(a.heading ?? "")}</${tag}>` +
+      `<p id="${esc(a["pitch-id"] || "hero-pitch")}" class="hero__pitch">${escText(a.pitch ?? "")}</p>` +
       `</div>` +
       `</div>` +
       `</section>`
@@ -287,7 +287,7 @@ const LEAF_COMPONENTS_DEF = {
   "x-link": (a, ctx) =>
     `<a class="link" href="${escUrl(a.href ?? "")}"${externalAttrs(a.href, ctx?.siteDomain)}${passThrough(
       a
-    )}>${esc(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`,
+    )}>${escText(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`,
 };
 
 const WRAPPER_COMPONENTS_DEF = {
@@ -296,23 +296,23 @@ const WRAPPER_COMPONENTS_DEF = {
       `<footer class="site-footer"${passThrough(a)}>` +
       `<div class="site-footer__grid">` +
       `<div class="site-footer__col">` +
-      `<span class="site-footer__brand">${esc(a.brand ?? "")}</span>` +
-      (a.blurb ? `<span class="site-footer__blurb">${esc(a.blurb)}</span>` : "") +
+      `<span class="site-footer__brand">${escText(a.brand ?? "")}</span>` +
+      (a.blurb ? `<span class="site-footer__blurb">${escText(a.blurb)}</span>` : "") +
       `</div>` +
       `<div class="site-footer__col">` +
       `<span class="site-footer__label">Reach us</span>` +
       (a.phone
-        ? `<a class="site-footer__link" href="tel:${esc(a["phone-href"] || telDigits(a.phone))}">${esc(a.phone)}</a>`
+        ? `<a class="site-footer__link" href="tel:${escUrl(a["phone-href"] || telDigits(a.phone))}">${escText(a.phone)}</a>`
         : "") +
-      (a.email ? `<a class="site-footer__link" href="mailto:${esc(a.email)}">${esc(a.email)}</a>` : "") +
+      (a.email ? `<a class="site-footer__link" href="mailto:${escUrl(a.email)}">${escText(a.email)}</a>` : "") +
       `</div>` +
       `<div class="site-footer__col">` +
-      `<span class="site-footer__label">${esc(a["links-heading"] || "Elsewhere")}</span>`;
+      `<span class="site-footer__label">${escText(a["links-heading"] || "Elsewhere")}</span>`;
     const close =
       `</div>` +
       `</div>` +
       (a.copyright
-        ? `<div class="site-footer__bar"><p class="site-footer__copyright">${esc(a.copyright)}</p></div>`
+        ? `<div class="site-footer__bar"><p class="site-footer__copyright">${escText(a.copyright)}</p></div>`
         : "") +
       `</footer>`;
     return [open, close];
@@ -410,7 +410,7 @@ const WRAPPER_COMPONENTS_DEF = {
   "x-map": (a) => [
     `<svg class="map" viewBox="${esc(a.viewbox ?? "")}"${
       a.width ? ` style="--map-width:${esc(a.width)}"` : ""
-    } role="img" aria-label="${esc(
+    } role="img" aria-label="${escText(
       a.label ?? ""
     )}" focusable="false" xmlns="http://www.w3.org/2000/svg"${passThrough(a)}>`,
     `</svg>`,
@@ -434,12 +434,12 @@ const WRAPPER_COMPONENTS_DEF = {
   ],
 
   "x-side-nav-group": (a) => [
-    `<div class="nav__group" role="group" aria-label="${esc(a.label ?? "Group")}"${passThrough(a)}>`,
+    `<div class="nav__group" role="group" aria-label="${escText(a.label ?? "Group")}"${passThrough(a)}>`,
     `</div>`,
   ],
 
   "x-side-nav": (a) => [
-    `<nav class="${classes("nav", `nav--${a.orientation === "row" ? "row" : "column"}`)}" aria-label="${esc(
+    `<nav class="${classes("nav", `nav--${a.orientation === "row" ? "row" : "column"}`)}" aria-label="${escText(
       a.label ?? "Sections"
     )}"${passThrough(a)}>`,
     `</nav>`,
@@ -503,7 +503,7 @@ function esc(value) {
 
 function isOwnHost(hostname, siteDomain) {
   if (!siteDomain) {
-    throw new Error("isOwnHost requires siteDomain -- see this function's own comment above.");
+    throw new Error("siteDomain is required: pass the domain your site is served from.");
   }
   const host = String(hostname ?? "").toLowerCase();
   return host === siteDomain || host.endsWith(`.${siteDomain}`);
@@ -537,12 +537,23 @@ function externalMark(href, siteDomain) {
   return isExternalHref(href, siteDomain) ? EXTERNAL_MARK : "";
 }
 
+const ALLOWED_URL_SCHEMES = new Set(["https", "http", "mailto", "tel", "sms"]);
+
 function escUrl(value) {
-  return decodeEntities(value)
+  const url = decodeEntities(value);
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(url.replace(/[\u0000-\u0020]/g, ""));
+  if (scheme && !ALLOWED_URL_SCHEMES.has(scheme[1].toLowerCase())) return "";
+  return url
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function escCssUrl(value) {
+  return escUrl(value)
+    .replace(/[\\')]/g, "\\$&")
+    .replace(/\r?\n|\r/g, "\\a ");
 }
 
 const ALLOWED_TAGS = new Set(ALLOWED_ELEMENT_NAMES);
@@ -600,7 +611,7 @@ function contactActionsHtml(a, { withPassThrough = false } = {}) {
             "btn",
             kind === primary ? "btn--primary" : "btn--secondary",
             "contact-actions__item"
-          )}" href="${esc(href)}">${label}</a>`
+          )}" href="${escUrl(href)}">${label}</a>`
       )
       .join("") +
     `</div>`
