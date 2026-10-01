@@ -304,19 +304,30 @@ const LEAF_COMPONENTS_DEF = {
       a
     )}>${escText(a.label ?? "")}${externalMark(a.href, ctx)}</a>`,
 
-  "x-line": (a) =>
-    `<li class="${classes("line", a.mark && "line--marked")}"${passThrough(a)}>` +
-    `<span class="line__text">${escText(a.text ?? "")}</span>` +
-    (a.mark ? `<span class="line__mark">${escText(a.mark)}</span>` : "") +
-    `</li>`,
+  "x-line": (a) => {
+    if (!a.text) throw new Error("x-line needs text: pass the words of the line.");
+    return (
+      `<li class="${classes("line", a.mark && "line--marked")}"${passThrough(a)}>` +
+      `<span class="line__text">${escText(a.text)}</span>` +
+      (a.mark ? `<span class="line__mark">${escText(a.mark)}</span>` : "") +
+      `</li>`
+    );
+  },
 
-  "x-sticker": (a) => `<span class="sticker"${passThrough(a)}>${escText(a.label ?? "")}</span>`,
+  "x-sticker": (a) => {
+    if (!a.label) throw new Error("x-sticker needs label: pass the words of the sticker.");
+    return `<span class="sticker"${passThrough(a)}>${escText(a.label)}</span>`;
+  },
 
-  "x-seal": (a) =>
-    `<div class="seal"${passThrough(a)}>` +
-    `<span class="seal__line">${escText(a.line ?? "")}</span>` +
-    (a.subline ? `<span class="seal__subline">${escText(a.subline)}</span>` : "") +
-    `</div>`,
+  "x-seal": (a) => {
+    if (!a.line) throw new Error("x-seal needs line: pass the words of the seal.");
+    return (
+      `<div class="seal"${passThrough(a)}>` +
+      `<span class="seal__line">${escText(a.line)}</span>` +
+      (a.subline ? `<span class="seal__subline">${escText(a.subline)}</span>` : "") +
+      `</div>`
+    );
+  },
 
   "x-tape-item": (a, ctx) => {
     const band = frames(ctx).at(-1);
@@ -494,16 +505,19 @@ const WRAPPER_COMPONENTS_DEF = {
     `</div>`,
   ],
 
-  "x-line-panes": (a) => [
-    `<div class="line-panes" role="group" aria-label="${escText(a.label ?? "")}"${passThrough(a)}>`,
-    `</div>`,
-  ],
-  "x-line-pane": (a) => [
-    `<div class="line-pane"${passThrough(a)}>` +
-      `<h3 class="line-pane__heading">${escText(a.heading ?? "")}</h3>` +
-      `<ol class="line-pane__lines">`,
-    `</ol>` + (a.stamp ? `<span class="line-pane__stamp">${escText(a.stamp)}</span>` : "") + `</div>`,
-  ],
+  "x-line-panes": (a) => {
+    if (!a.label) throw new Error("x-line-panes needs label: pass the words that name the pair.");
+    return [`<div class="line-panes" role="group" aria-label="${escText(a.label)}"${passThrough(a)}>`, `</div>`];
+  },
+  "x-line-pane": (a) => {
+    if (!a.heading) throw new Error("x-line-pane needs heading: pass the words of the pane's heading.");
+    return [
+      `<div class="line-pane"${passThrough(a)}>` +
+        `<h3 class="line-pane__heading">${escText(a.heading)}</h3>` +
+        `<ol class="line-pane__lines">`,
+      `</ol>` + (a.stamp ? `<span class="line-pane__stamp">${escText(a.stamp)}</span>` : "") + `</div>`,
+    ];
+  },
 
   "x-tape-pair": (a, ctx) => {
     const pair = { kind: "pair", rolls: false };
