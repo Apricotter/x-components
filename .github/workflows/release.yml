@@ -1,20 +1,16 @@
 name: release
 
-# FIRST PUBLISH ONLY. A brand-new package can't be staged -- staging needs
-# the package to exist on the registry already, and the trusted-publisher
-# setup on npmjs.com needs the package to exist first too. So v0.1.0 is
-# published directly, with a short-lived token, from this workflow. After
-# it lands: add the trusted publisher, revoke the token, delete the repo
-# secret, and require 2FA. Every release after this one uses the staged
-# variant instead.
-#
-# Provenance still applies: it comes from any GitHub Actions run with
-# id-token: write, not only from a trusted-publisher run.
+# EVERY RELEASE AFTER THE FIRST. Trusted publishing, no token: CI stages
+# the release, and a maintainer with 2FA approves it on npmjs.com before
+# anyone can install it. On npmjs.com, set the trusted publisher's allowed
+# actions to npm stage publish alone, which is always allowed; leave direct
+# npm publish unticked. This workflow has no token to fall back on, and
+# runs no npm publish.
 #
 # ACTIONS ARE PINNED TO COMMIT SHAS, not tags. A tag can move to a different
-# commit; a workflow that runs with publish credentials should not trust a
-# third party to keep pointing it at the same code. The version after # is
-# for a human reading this file, not for git.
+# commit; a workflow with publish access should not trust a third party to
+# keep pointing it at the same code. The version after # is for a human
+# reading this file, not for git.
 
 on:
   push:
@@ -61,7 +57,20 @@ jobs:
             console.log("OK: tarball holds exactly the projected files.");
           '
 
-      - name: Publish
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_FIRST_PUBLISH }}
+      # STAGING NEEDS npm 11.15.0. The npm that comes with the runner's Node
+      # may be older; stop here, before anything is sent, if it is.
+      - name: Check npm can stage
+        run: |
+          node -e '
+            const need = "11.15.0".split(".").map(Number);
+            const have = require("node:child_process").execSync("npm --version").toString().trim().split(".").map(Number);
+            const ok = have[0] !== need[0] ? have[0] > need[0] : have[1] !== need[1] ? have[1] > need[1] : have[2] >= need[2];
+            if (!ok) {
+              console.error("npm " + have.join(".") + " cannot stage. Staged publishing needs 11.15.0 or later.");
+              process.exit(1);
+            }
+            console.log("OK: npm " + have.join(".") + " can stage.");
+          '
+
+      - name: Stage the release
+        run: npm stage publish

@@ -1,13 +1,17 @@
 
-import { COMPONENT_OWN_ATTRIBUTES, ALLOWED_ELEMENT_NAMES } from "./component-attributes.generated.mjs";
+import {
+  COMPONENT_OWN_ATTRIBUTES,
+  COMPONENT_ATTRIBUTE_PATTERNS,
+  ALLOWED_ELEMENT_NAMES,
+} from "./component-attributes.generated.mjs";
 
 const LEAF_COMPONENTS_DEF = {
   "x-button": (a, ctx) => {
-    const cls = classes("btn", `btn--${a.variant || "primary"}`, "full" in a && "btn--full");
+    const cls = classes("btn", `btn--${form("variant", a.variant) || "primary"}`, "full" in a && "btn--full");
     return a.href
       ? `<a class="${cls}" href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}${passThrough(
           a
-        )}>${escText(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`
+        )}>${escText(a.label ?? "")}${externalMark(a.href, ctx)}</a>`
       : `<button type="${esc(a.type || "button")}" class="${cls}"${boolAttr(
           a,
           "disabled"
@@ -33,7 +37,7 @@ const LEAF_COMPONENTS_DEF = {
       a.kind === "zone" && "hex--zone",
       a.kind === "point" && "hex--point",
       "unspecified" in a && a.unspecified !== "false" && "hex--zone-unspecified",
-      a.hue && `hex--hue-${a.hue.replace(/[^a-z0-9-]/gi, "")}`
+      form("hue", a.hue) && `hex--hue-${a.hue}`
     )}"${passThrough(a)}>${open}${a.title ? `<title>${escText(a.title)}</title>` : ""}<polygon class="hex__cell" points="${esc(
       a.points ?? ""
     )}"></polygon>${
@@ -53,7 +57,7 @@ const LEAF_COMPONENTS_DEF = {
       a.label ?? ""
     )}</span><p class="postcard__value">${
       a.href
-        ? `<a href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}>${value}${externalMark(a.href, ctx?.siteDomain)}</a>`
+        ? `<a href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}>${value}${externalMark(a.href, ctx)}</a>`
         : value
     }</p></div>`;
   },
@@ -79,7 +83,7 @@ const LEAF_COMPONENTS_DEF = {
       a.href
         ? `<a class="table__row-link" href="${escUrl(a.href)}"${externalAttrs(
             a.href, ctx?.siteDomain
-          )}>${escText(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`
+          )}>${escText(a.label ?? "")}${externalMark(a.href, ctx)}</a>`
         : escText(a.label ?? "")
     }</th>`,
 
@@ -94,11 +98,11 @@ const LEAF_COMPONENTS_DEF = {
       (missing || empty) && "table__cell--null",
       empty && "table__cell--empty"
     );
-    const text = missing ? "no value" : empty ? "empty" : escText(a.value);
+    const text = missing ? escText(word(ctx, "noValue")) : empty ? escText(word(ctx, "empty")) : escText(a.value);
     const body = a.href && !missing && !empty
       ? `<a class="table__row-link" href="${escUrl(a.href)}"${externalAttrs(
           a.href, ctx?.siteDomain
-        )}>${text}${externalMark(a.href, ctx?.siteDomain)}</a>`
+        )}>${text}${externalMark(a.href, ctx)}</a>`
       : text;
     return `<td class="${classes(cls, a.href && !missing && !empty && "table__cell--link")}"${passThrough(a)}>${body}</td>`;
   },
@@ -130,7 +134,7 @@ const LEAF_COMPONENTS_DEF = {
         : `<input class="field__input" type="${esc(a.type || "text")}" name="${name}"${boolAttr(
             a,
             "required"
-          )}${a.value ? ` value="${esc(a.value)}"` : ""}${describedBy}${passThrough(a)}>`;
+          )}${a.value ? ` value="${escText(a.value)}"` : ""}${describedBy}${passThrough(a)}>`;
     return `<label class="field"><span class="field__label">${escText(
       a.label ?? ""
     )}</span>${hint}${control}</label>`;
@@ -138,13 +142,12 @@ const LEAF_COMPONENTS_DEF = {
 
   "x-serp-mock": (a) => {
     const query = escText(a.query ?? "");
-    const noun = escText(a.noun || "shop");
-    const Noun = noun.charAt(0).toUpperCase() + noun.slice(1);
     const row = (name, rating, modifier = "") =>
       `<li class="serp-mock__row${modifier}">` +
       `<span class="serp-mock__row-dot"></span>` +
-      `<span class="serp-mock__row-name">${name}</span>` +
-      `<span class="serp-mock__row-rating">${rating}</span></li>`;
+      `<span class="serp-mock__row-name">${escText(name ?? "")}</span>` +
+      (rating ? `<span class="serp-mock__row-rating">${escText(rating)}</span>` : "") +
+      `</li>`;
     return (
       `<figure class="serp-mock"${passThrough(a)}>` +
       `<div class="serp-mock__panel">` +
@@ -165,12 +168,12 @@ const LEAF_COMPONENTS_DEF = {
       `<span class="serp-mock__pin serp-mock__pin--3"></span>` +
       `</div>` +
       `<ul class="serp-mock__list">` +
-      row(`Your ${noun}`, "4.6 &middot; 87", " serp-mock__row--you") +
-      row(`${Noun} two blocks over`, "4.8 &middot; 214") +
-      row(`${Noun} on the highway`, "4.4 &middot; 132") +
-      row("The chain by the mall", "4.1 &middot; 508") +
+      row(a.you, a["you-rating"], " serp-mock__row--you") +
+      row(a["near-1"], a["near-1-rating"]) +
+      row(a["near-2"], a["near-2-rating"]) +
+      row(a["near-3"], a["near-3-rating"]) +
       `</ul></div>` +
-      `<figcaption class="serp-mock__caption">Placeholder. Stylized, not a real Google screenshot.</figcaption>` +
+      (a.caption ? `<figcaption class="serp-mock__caption">${escText(a.caption)}</figcaption>` : "") +
       `</figure>`
     );
   },
@@ -186,7 +189,7 @@ const LEAF_COMPONENTS_DEF = {
 
   "x-chip": (a) => `<span class="chip"${passThrough(a)}>${escText(a.label ?? "")}</span>`,
 
-  "x-tag": (a) => `<span class="tag"${passThrough(a)}>${escText(a.label || "Partner")}</span>`,
+  "x-tag": (a) => `<span class="tag"${passThrough(a)}>${escText(a.label ?? "")}</span>`,
 
   "x-kicker": (a) =>
     `<div class="product-kicker"${passThrough(a)}>` +
@@ -231,7 +234,7 @@ const LEAF_COMPONENTS_DEF = {
         a.href ? ` href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}` : ""
       }${passThrough(a)}>` +
       (a.image
-        ? `<img class="${classes("card-link__image", a["image-class"])}" src="${escUrl(a.image)}" alt="${escText(a["image-alt"] ?? "")}">`
+        ? `<img class="card-link__image" src="${escUrl(a.image)}" alt="${escText(a["image-alt"] ?? "")}">`
         : a["image-placeholder"]
           ? `<div class="media-placeholder media-placeholder--3-2">${escText(a["image-placeholder"])}</div>`
           : "") +
@@ -242,7 +245,14 @@ const LEAF_COMPONENTS_DEF = {
     );
   },
 
-  "x-header": (a) =>
+  "x-header": (a) => {
+    if (a["contact-href"] && !a["contact-label"]) {
+      throw new Error("x-header has contact-href, so it needs contact-label: pass the words of the contact link.");
+    }
+    if (boolAttr(a, "theme-toggle") && !a["theme-toggle-label"]) {
+      throw new Error("x-header has theme-toggle, so it needs theme-toggle-label: pass the name of the toggle.");
+    }
+    return (
     `<header class="site-header"${passThrough(a)}>` +
     `<div class="site-header__brand">` +
     `<span class="site-header__wordmark">${escText(a.brand ?? "")}</span>` +
@@ -253,14 +263,19 @@ const LEAF_COMPONENTS_DEF = {
           ? `<a class="nav__item site-header__phone" href="tel:${escUrl(a["phone-href"] || telDigits(a.phone))}">${escText(a.phone)}</a>`
           : "") +
         (a["contact-href"]
-          ? `<a class="nav__item" href="${escUrl(a["contact-href"])}">Contact</a>`
+          ? `<a class="nav__item" href="${escUrl(a["contact-href"])}">${escText(a["contact-label"])}</a>`
           : "") +
         `</div>`
       : "") +
-    (boolAttr(a, "theme-toggle") ? themeToggleHtml() : "") +
-    `</header>`,
+    (boolAttr(a, "theme-toggle") ? themeToggleHtml(a["theme-toggle-label"]) : "") +
+    `</header>`
+    );
+  },
 
-  "x-theme-toggle": (a) => themeToggleHtml(),
+  "x-theme-toggle": (a) => {
+    if (!a.label) throw new Error("x-theme-toggle needs label: pass the name of the toggle.");
+    return themeToggleHtml(a.label);
+  },
 
   "x-hero": (a) => {
     const tag = headingTag(a["heading-tag"]);
@@ -287,11 +302,35 @@ const LEAF_COMPONENTS_DEF = {
   "x-link": (a, ctx) =>
     `<a class="link" href="${escUrl(a.href ?? "")}"${externalAttrs(a.href, ctx?.siteDomain)}${passThrough(
       a
-    )}>${escText(a.label ?? "")}${externalMark(a.href, ctx?.siteDomain)}</a>`,
+    )}>${escText(a.label ?? "")}${externalMark(a.href, ctx)}</a>`,
+
+  "x-line": (a) =>
+    `<li class="${classes("line", a.mark && "line--marked")}"${passThrough(a)}>` +
+    `<span class="line__text">${escText(a.text ?? "")}</span>` +
+    (a.mark ? `<span class="line__mark">${escText(a.mark)}</span>` : "") +
+    `</li>`,
+
+  "x-sticker": (a) => `<span class="sticker"${passThrough(a)}>${escText(a.label ?? "")}</span>`,
+
+  "x-seal": (a) =>
+    `<div class="seal"${passThrough(a)}>` +
+    `<span class="seal__line">${escText(a.line ?? "")}</span>` +
+    (a.subline ? `<span class="seal__subline">${escText(a.subline)}</span>` : "") +
+    `</div>`,
+
+  "x-tape-item": (a, ctx) => {
+    const band = frames(ctx).at(-1);
+    if (band?.kind !== "tape") return tapeItemHtml(a, null, ctx, false);
+    band.items.push(a);
+    return tapeItemHtml(a, band, ctx, false);
+  },
 };
 
 const WRAPPER_COMPONENTS_DEF = {
   "x-footer": (a) => {
+    if ((a.phone || a.email) && !a["reach-heading"]) {
+      throw new Error("x-footer has a phone or an email, so it needs reach-heading: pass the heading of that column.");
+    }
     const open =
       `<footer class="site-footer"${passThrough(a)}>` +
       `<div class="site-footer__grid">` +
@@ -300,14 +339,14 @@ const WRAPPER_COMPONENTS_DEF = {
       (a.blurb ? `<span class="site-footer__blurb">${escText(a.blurb)}</span>` : "") +
       `</div>` +
       `<div class="site-footer__col">` +
-      `<span class="site-footer__label">Reach us</span>` +
+      (a["reach-heading"] ? `<span class="site-footer__label">${escText(a["reach-heading"])}</span>` : "") +
       (a.phone
         ? `<a class="site-footer__link" href="tel:${escUrl(a["phone-href"] || telDigits(a.phone))}">${escText(a.phone)}</a>`
         : "") +
       (a.email ? `<a class="site-footer__link" href="mailto:${escUrl(a.email)}">${escText(a.email)}</a>` : "") +
       `</div>` +
       `<div class="site-footer__col">` +
-      `<span class="site-footer__label">${escText(a["links-heading"] || "Elsewhere")}</span>`;
+      (a["links-heading"] ? `<span class="site-footer__label">${escText(a["links-heading"])}</span>` : "");
     const close =
       `</div>` +
       `</div>` +
@@ -409,7 +448,7 @@ const WRAPPER_COMPONENTS_DEF = {
 
   "x-map": (a) => [
     `<svg class="map" viewBox="${esc(a.viewbox ?? "")}"${
-      a.width ? ` style="--map-width:${esc(a.width)}"` : ""
+      form("width", a.width) ? ` style="--map-width:${a.width}"` : ""
     } role="img" aria-label="${escText(
       a.label ?? ""
     )}" focusable="false" xmlns="http://www.w3.org/2000/svg"${passThrough(a)}>`,
@@ -434,13 +473,13 @@ const WRAPPER_COMPONENTS_DEF = {
   ],
 
   "x-side-nav-group": (a) => [
-    `<div class="nav__group" role="group" aria-label="${escText(a.label ?? "Group")}"${passThrough(a)}>`,
+    `<div class="nav__group" role="group" aria-label="${escText(a.label ?? "")}"${passThrough(a)}>`,
     `</div>`,
   ],
 
   "x-side-nav": (a) => [
     `<nav class="${classes("nav", `nav--${a.orientation === "row" ? "row" : "column"}`)}" aria-label="${escText(
-      a.label ?? "Sections"
+      a.label ?? ""
     )}"${passThrough(a)}>`,
     `</nav>`,
   ],
@@ -454,6 +493,70 @@ const WRAPPER_COMPONENTS_DEF = {
     `<div class="live-region" role="${esc(a.role ?? "status")}"${passThrough(a)}>`,
     `</div>`,
   ],
+
+  "x-line-panes": (a) => [
+    `<div class="line-panes" role="group" aria-label="${escText(a.label ?? "")}"${passThrough(a)}>`,
+    `</div>`,
+  ],
+  "x-line-pane": (a) => [
+    `<div class="line-pane"${passThrough(a)}>` +
+      `<h3 class="line-pane__heading">${escText(a.heading ?? "")}</h3>` +
+      `<ol class="line-pane__lines">`,
+    `</ol>` + (a.stamp ? `<span class="line-pane__stamp">${escText(a.stamp)}</span>` : "") + `</div>`,
+  ],
+
+  "x-tape-pair": (a, ctx) => {
+    const pair = { kind: "pair", rolls: false };
+    frames(ctx).push(pair);
+    return [
+      `<div class="tape-pair"${passThrough(a)}>`,
+      closing(() => {
+        leave(ctx, pair, "x-tape-pair");
+        if (!pair.rolls) return `</div>`;
+        for (const name of ["control-name", "pause-label", "play-label"]) {
+          if (!a[name]) {
+            throw new Error(`x-tape-pair has a band that rolls, so it needs ${name}: pass the words of the control.`);
+          }
+        }
+        return (
+          `<label class="tape-control">` +
+          `<input class="tape-control__input" type="checkbox" checked>` +
+          `<span class="tape-control__name">${escText(a["control-name"])}</span>` +
+          `<span class="tape-control__glyph" aria-hidden="true"></span>` +
+          `<span class="tape-control__pause" aria-hidden="true">${escText(a["pause-label"])}</span>` +
+          `<span class="tape-control__play" aria-hidden="true">${escText(a["play-label"])}</span>` +
+          `</label></div>`
+        );
+      }),
+    ];
+  },
+  "x-tape": (a, ctx) => {
+    if (!a.separator) {
+      throw new Error("x-tape needs separator: pass the mark that goes between phrases.");
+    }
+    const roll = "roll" in a && a.roll !== "false";
+    const parent = frames(ctx).at(-1);
+    if (roll) {
+      if (!parent || parent.kind !== "pair") {
+        throw new Error("a band that rolls goes inside x-tape-pair, which holds the control that stops it.");
+      }
+      parent.rolls = true;
+    }
+    const band = { kind: "tape", sep: a.separator, items: [] };
+    frames(ctx).push(band);
+    return [
+      `<div class="${classes("tape", roll && "tape--roll")}"${passThrough(a)}><ul class="tape__row">`,
+      closing(() => {
+        leave(ctx, band, "x-tape");
+        let rows = `</ul>`;
+        if (roll) {
+          const repeat = band.items.map((item) => tapeItemHtml(item, band, ctx, true)).join("");
+          rows += `<ul class="tape__row" aria-hidden="true">${repeat}</ul>`.repeat(TAPE_REPEATS);
+        }
+        return rows + `</div>`;
+      }),
+    ];
+  },
 };
 
 let currentTag = null;
@@ -521,20 +624,28 @@ function isExternalHref(href, siteDomain) {
   return !isOwnHost(hostname, siteDomain);
 }
 
-const EXTERNAL_MARK =
+const EXTERNAL_ICON =
   '<svg class="external-link__icon" aria-hidden="true" focusable="false" ' +
   'viewBox="0 0 12 12" width="12" height="12">' +
   '<path d="M4.5 1.5h6v6M10.5 1.5 5 7M8 9.5v1.5H1V4h1.5" fill="none" ' +
   'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" ' +
-  'stroke-linejoin="round"/></svg>' +
-  '<span class="visually-hidden"> (opens in a new tab)</span>';
+  'stroke-linejoin="round"/></svg>';
 
 function externalAttrs(href, siteDomain) {
   return isExternalHref(href, siteDomain) ? ' target="_blank" rel="noopener noreferrer"' : "";
 }
 
-function externalMark(href, siteDomain) {
-  return isExternalHref(href, siteDomain) ? EXTERNAL_MARK : "";
+function externalMark(href, ctx) {
+  if (!isExternalHref(href, ctx?.siteDomain)) return "";
+  return EXTERNAL_ICON + `<span class="visually-hidden"> ${escText(word(ctx, "newTab"))}</span>`;
+}
+
+function word(ctx, name) {
+  const value = ctx?.words?.[name];
+  if (!value) {
+    throw new Error(`words.${name} is required: pass the words the site uses for it in the render context.`);
+  }
+  return value;
 }
 
 const ALLOWED_URL_SCHEMES = new Set(["https", "http", "mailto", "tel", "sms"]);
@@ -571,8 +682,60 @@ function headingLevel(value) {
   return ALLOWED_HEADING_LEVELS.has(value) ? value : "h2";
 }
 
+class Closing {
+  constructor(work) {
+    this.work = work;
+  }
+  toString() {
+    this.text ??= this.work();
+    return this.text;
+  }
+}
+function closing(work) {
+  return new Closing(work);
+}
+
+function frames(ctx) {
+  if (!ctx || typeof ctx !== "object") {
+    throw new Error("the tape needs the render context ({ siteDomain }) to keep its place.");
+  }
+  return (ctx.frames ??= []);
+}
+
+function leave(ctx, frame, tag) {
+  const stack = frames(ctx);
+  if (stack.at(-1) !== frame) {
+    throw new Error(`${tag} was closed out of order: its children are not all inside it.`);
+  }
+  stack.pop();
+}
+
+const TAPE_REPEATS = 3;
+
+function tapeItemHtml(a, band, ctx, repeat) {
+  const text = escText(a.text ?? "");
+  const inner = a.href
+    ? `<a href="${escUrl(a.href)}"${externalAttrs(a.href, ctx?.siteDomain)}${repeat ? ' tabindex="-1"' : ""}>${text}${externalMark(a.href, ctx)}</a>`
+    : text;
+  return (
+    `<li class="tape__item"${repeat ? "" : passThrough(a)}>${inner}</li>` +
+    (band ? `<li class="tape__sep" aria-hidden="true">${escText(band.sep)}</li>` : "")
+  );
+}
+
 function classes(...values) {
   return values.filter(Boolean).join(" ");
+}
+
+const compiledForms = new Map();
+function form(name, value) {
+  const pattern = COMPONENT_ATTRIBUTE_PATTERNS[currentTag]?.[name];
+  if (pattern === undefined) {
+    throw new Error(`${currentTag} has no pattern for ${name}: the model gives the attribute none.`);
+  }
+  if (value === undefined || value === null) return "";
+  if (!compiledForms.has(pattern)) compiledForms.set(pattern, new RegExp(pattern));
+  return compiledForms.get(pattern).test(String(value)) ? String(value) : "";
 }
 
 function attrs(map) {
@@ -594,10 +757,14 @@ function boolAttr(a, name) {
 
 function contactActionsHtml(a, { withPassThrough = false } = {}) {
   const primary = a.primary || "text";
+  const labelled = (key, kind) => {
+    if (!a[key]) throw new Error(`a contact action for ${kind} needs ${key}: pass the words of the button.`);
+    return escText(a[key]);
+  };
   const items = [
-    a.phone && ["text", "Text", `sms:${telDigits(a.phone)}`],
-    a.email && ["email", "Email", `mailto:${a.email}`],
-    a.phone && ["call", "Call", `tel:${telDigits(a.phone)}`],
+    a.phone && ["text", labelled("text-label", "a phone"), `sms:${telDigits(a.phone)}`],
+    a.email && ["email", labelled("email-label", "an email"), `mailto:${a.email}`],
+    a.phone && ["call", labelled("call-label", "a phone"), `tel:${telDigits(a.phone)}`],
   ].filter(Boolean);
 
   if (!items.length) return "";
@@ -618,9 +785,9 @@ function contactActionsHtml(a, { withPassThrough = false } = {}) {
   );
 }
 
-function themeToggleHtml() {
+function themeToggleHtml(label) {
   return (
-    `<button type="button" id="theme-toggle" class="theme-toggle" aria-label="Dark mode" aria-pressed="false">` +
+    `<button type="button" id="theme-toggle" class="theme-toggle" aria-label="${escText(label)}" aria-pressed="false">` +
     `<span class="theme-toggle__stars" aria-hidden="true">` +
     `<span class="theme-toggle__star theme-toggle__star--1"></span>` +
     `<span class="theme-toggle__star theme-toggle__star--2"></span>` +

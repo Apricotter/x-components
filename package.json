@@ -1,6 +1,6 @@
 {
   "name": "@apricotter/x-components",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A registry of x-* markup tags, expanded server-side, and the ontology it is checked against.",
   "license": "Apache-2.0",
   "type": "module",
@@ -16,13 +16,18 @@
     "component.ttl",
     "wai-aria.ttl",
     "component-attributes.generated.mjs",
-    "expand.mjs"
+    "expand.mjs",
+    "static.mjs"
   ],
   "exports": {
     ".": "./expand.mjs",
+    "./static": "./static.mjs",
     "./component.ttl": "./component.ttl",
     "./wai-aria.ttl": "./wai-aria.ttl",
     "./component-attributes": "./component-attributes.generated.mjs"
+  },
+  "dependencies": {
+    "cheerio": "1.2.0"
   },
   "engines": {
     "node": ">=22.14.0"
